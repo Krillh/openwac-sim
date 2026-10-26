@@ -178,17 +178,13 @@ fn synchronize(
         let maintenance_pending = computer.kernel.deferred_init_pending()
             || computer.kernel.is_maintenance_pending()
             || computer.shared.has_exits();
-        let quantum = computer.shared.cpu_budget.quantum_fuel();
-        let budget_waiting = computer
-            .processes
-            .iter()
-            .any(GuestProcess::is_waiting_for_budget);
-        if !boot_active
-            && maintenance_pending
-            && !budget_waiting
-            && computer.shared.cpu_budget.reserve_quantum()
-        {
-            runtime.block_on(computer.kernel.deliver_exits(&computer.shared, quantum));
+        let maintenance_fuel = computer.shared.cpu_budget.remaining_fuel();
+        if !boot_active && maintenance_pending && maintenance_fuel > 0 {
+            runtime.block_on(
+                computer
+                    .kernel
+                    .deliver_exits(&computer.shared, maintenance_fuel),
+            );
         }
         if let Some(message) = computer.kernel.take_boot_failure() {
             events.push(event(
@@ -348,6 +344,12 @@ fn synchronize(
                     )),
                 },
             }
+        }
+        let boot_was_killed = computer.processes.iter().any(|process| {
+            process.pid == computer.boot_pid && process.status == GuestProcessStatus::Killed
+        });
+        if boot_was_killed {
+            cancel_boot_work(computer);
         }
         apply_kernel_panic(computer, &mut events);
         report_kernel_panic(computer, &mut events);
@@ -569,6 +571,18 @@ fn crash_computer_state(computer: &mut Computer) {
         }
     }
     computer.shared.reset_runtime_state();
+    computer.kernel = Arc::new(crate::kernel::KernelSlot::default());
+}
+
+/// A killed BIOS abandons all process and kernel work it queued during boot.
+/// The machine remains available, but no deferred boot child may start.
+fn cancel_boot_work(computer: &mut Computer) {
+    for pending in computer.pending_spawns.drain(..) {
+        if !pending.cancelled {
+            computer.shared.unmark_pending_spawn(pending.pid);
+            computer.shared.release_process_slot();
+        }
+    }
     computer.kernel = Arc::new(crate::kernel::KernelSlot::default());
 }
 

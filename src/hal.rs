@@ -215,18 +215,18 @@ impl ProcessControl {
             .lock()
             .map_err(|_| "process request queue lock poisoned".to_owned())?;
         if let ProcessRequest::Kill(pid) = request {
-            if requests
-                .iter()
-                .any(|queued| matches!(queued, ProcessRequest::Kill(existing) if *existing == pid))
-            {
-                return Ok(());
-            }
             let pending_kills = requests
                 .iter()
                 .filter(|queued| matches!(queued, ProcessRequest::Kill(_)))
                 .count();
             if pending_kills >= Self::MAX_PENDING_KILLS {
                 return Err("pending process kill limit reached".into());
+            }
+            if requests
+                .iter()
+                .any(|queued| matches!(queued, ProcessRequest::Kill(existing) if *existing == pid))
+            {
+                return Ok(());
             }
             requests.push_back(ProcessRequest::Kill(pid));
         } else {
@@ -608,6 +608,10 @@ impl CpuBudget {
 
     pub(crate) fn quantum_fuel(&self) -> u64 {
         self.quantum_fuel
+    }
+
+    pub(crate) fn remaining_fuel(&self) -> u64 {
+        *self.remaining.lock().expect("CPU budget lock poisoned")
     }
 
     pub(crate) async fn charge_syscall(&self, cost: u64) -> Result<bool, ()> {

@@ -268,12 +268,16 @@ fn define_hal_functions_for_store(
                 let Some(index) = nonnegative(index) else {
                     return device_status::INVALID_ARGUMENT;
                 };
-                if output_capacity < 20 {
-                    return device_status::RESPONSE_OVERRUN;
-                }
                 let Some(output_ptr) = nonnegative(output_ptr) else {
                     return device_status::INVALID_ARGUMENT;
                 };
+                let Some((interface_id, uuid)) = caller.data().computer.devices.device_info(index)
+                else {
+                    return device_status::INVALID_ARGUMENT;
+                };
+                if output_capacity < 20 {
+                    return device_status::RESPONSE_OVERRUN;
+                }
                 let Some(memory) = guest_memory(&mut caller) else {
                     return device_status::MEMORY_INVALID;
                 };
@@ -285,10 +289,6 @@ fn define_hal_functions_for_store(
                 if !charge_syscall(computer, waiting, 1).await {
                     return device_status::SYSCALL_TOO_EXPENSIVE;
                 }
-                let Some((interface_id, uuid)) = caller.data().computer.devices.device_info(index)
-                else {
-                    return device_status::INVALID_ARGUMENT;
-                };
                 debug!("hal_device_info #{index}");
                 let mut info = [0; 20];
                 info[..4].copy_from_slice(&interface_id.to_le_bytes());
@@ -330,13 +330,13 @@ fn define_hal_functions_for_store(
                     return device_status::POINTER_INVALID;
                 };
                 let operation = operation as u32;
-                if arguments_len > MAX_HAL_BUFFER_SIZE || response_len > MAX_HAL_BUFFER_SIZE {
-                    return device_status::INVALID_ARGUMENT;
-                }
                 let work_bytes = match arguments_len.checked_add(response_len) {
                     Some(bytes) if bytes <= MAX_DEVICE_CALL_WORK_BYTES => bytes,
                     _ => return device_status::SYSCALL_TOO_EXPENSIVE,
                 };
+                if arguments_len > MAX_HAL_BUFFER_SIZE || response_len > MAX_HAL_BUFFER_SIZE {
+                    return device_status::INVALID_ARGUMENT;
+                }
                 let cost = DEVICE_CALL_BASE_COST
                     + u64::try_from(work_bytes.div_ceil(256)).unwrap_or(u64::MAX)
                         * DEVICE_CALL_COST_PER_256_BYTES;
