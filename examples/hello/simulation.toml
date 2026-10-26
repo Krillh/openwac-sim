@@ -1,0 +1,12 @@
+max_ticks = 64
+tick_interval_ms = 50
+
+[[computers]]
+name = "hello"
+bootloader = "hello.wat"
+
+[computers.cpu]
+fuel_per_tick = 65536
+quantum_fuel = 256
+max_processes = 16
+max_memory_bytes = 1048576

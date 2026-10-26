@@ -1,0 +1,51 @@
+max_ticks = 10_000_000
+tick_interval_ms = 50
+
+[[computers]]
+name = "dev"
+bootloader = "boot.wasm"
+
+[computers.cpu]
+fuel_per_tick = 65536
+quantum_fuel = 256
+max_processes = 16
+max_memory_bytes = 1048576
+
+[[computers.devices]]
+type = "disk"
+uuid = "00000000-0000-0000-0000-000000000002"
+block_count = 512
+block_size = 2048
+
+[[computers.devices]]
+type = "disk"
+uuid = "00000000-0000-0000-0000-000000000003"
+block_count = 512
+block_size = 2048
+
+[[computers.devices]]
+type = "serial_monitor"
+name = "serialA"
+
+[[computers.devices]]
+type = "ttd"
+headless = false
+
+[[computers.devices]]
+type = "keyboard"
+name = "keyboard"
+
+[[computers.devices]]
+type = "peripheral_port"
+
+[[computers.devices]]
+type = "file_importer"
+path = "kernel.x"
+
+[[computers.devices]]
+type = "file_importer"
+path = "os.x"
+
+[[computers.devices]]
+type = "file_importer"
+path = "sh.x"

@@ -1,0 +1,21 @@
+max_ticks = 1000000
+tick_interval_ms = 10
+
+[[computers]]
+bootloader = "boot.wasm"
+
+[computers.cpu]
+fuel_per_tick = 65636
+quantum_fuel = 256
+
+[[computers.devices]]
+type = "disk"
+is_root = true
+remove_on_drop = true
+
+[[computers.devices]]
+type = "disk"
+
+[[computers.devices]]
+type = "file_importer"
+path = "gcd.wat"

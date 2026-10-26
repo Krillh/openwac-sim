@@ -1,0 +1,24 @@
+[package]
+name = "openwac"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+wasmtime = "49.0.2"
+uuid = { version = "1.27.0", features = ["v4"] }
+tokio = { version = "1.53.2", features = ["rt-multi-thread", "sync", "time", "net"] }
+wat = "1"
+wasmparser = "0.258.3"
+anyhow = "1.0.104"
+serde = { version = "1", features = ["derive"] }
+toml = "0.8"
+log = "0.4"
+env_logger = "0.11"
+minifb = "0.27"
+png = "0.17"
+
+# Dependencies (mostly Wasmtime and Cranelift, which compile guest modules)
+# are slow unoptimized; keep this crate's own code debuggable.
+[profile.dev.package."*"]
+opt-level = 3
