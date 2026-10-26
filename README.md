@@ -5,6 +5,11 @@ HAL, device protocols, boot handoff, and process lifecycle follow the mod. The
 simulator also supports WAT boot firmware, serial consoles, headless displays,
 and running without wall-clock pacing.
 
+This simulator will remain in version lock step with the Minecraft mod. The
+goal is that if the simulator is equal in version to the mod, then the behavior
+should match, allowing application development with the simulator to be
+meaningfully similar to running that application in the mod.
+
 Build and run from this directory:
 
 ```powershell
